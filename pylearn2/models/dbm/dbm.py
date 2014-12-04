@@ -9,10 +9,10 @@ __maintainer__ = "LISA Lab"
 
 import functools
 import logging
+import operator
 import numpy as np
-import warnings
 
-from theano.compat.six.moves import xrange
+from theano.compat.six.moves import reduce, xrange
 from theano import tensor as T, config
 
 from pylearn2.compat import OrderedDict
@@ -22,7 +22,6 @@ from pylearn2.models.dbm.inference_procedure import WeightDoubling
 from pylearn2.models.dbm.sampling_procedure import GibbsEvenOdd
 from pylearn2.utils import safe_zip, safe_izip
 from pylearn2.utils.rng import make_np_rng
-
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +39,7 @@ class DBM(Model):
         The batch size the model should use. Some convolutional
         LinearTransforms require a compile-time hardcoded batch size,
         otherwise this would not be part of the model specification.
-    visible_layer : WRITEME
+    visible_layer : VisibleLayer
         The visible layer of the DBM.
     hidden_layers : list
         The hidden layers. A list of HiddenLayer objects. The first
@@ -48,12 +47,18 @@ class DBM(Model):
     niter : int
         Number of mean field iterations for variational inference
         for the positive phase.
-    sampling_procedure : WRITEME
-    inference_procedure : WRITEME
+    sampling_procedure : SamplingProcedure (optional)
+        An object that specifies how to draw samples from the model.
+        If not specified, some standard algorithm will be used.
+    inference_procedure : InferenceProcedure (optional)
+        An object that specifies how to perform mean field inference
+        in the model. If not specified, some standard algorithm will
+        be used.
     """
 
     def __init__(self, batch_size, visible_layer, hidden_layers, niter,
                  sampling_procedure=None, inference_procedure=None):
+        super(DBM, self).__init__()
         self.__dict__.update(locals())
         del self.self
         assert len(hidden_layers) >= 1
@@ -138,7 +143,7 @@ class DBM(Model):
 
         assert len(terms) > 0
 
-        rval = reduce(lambda x, y: x + y, terms)
+        rval = reduce(operator.add, terms)
 
         assert rval.ndim == 1
         return rval
@@ -204,7 +209,7 @@ class DBM(Model):
 
         assert len(terms) > 0
 
-        rval = reduce(lambda x, y: x + y, terms)
+        rval = reduce(operator.add, terms)
 
         assert rval.ndim == 1
         return rval
@@ -447,8 +452,6 @@ class DBM(Model):
 
         states = [layer.make_state(num_examples, rng) for layer in layers]
 
-        zipped = safe_zip(layers, states)
-
         def recurse_check(layer, state):
             if isinstance(state, (list, tuple)):
                 for elem in state:
@@ -461,10 +464,10 @@ class DBM(Model):
                                      str(m) + " examples in some component."
                                      "We requested " + str(num_examples))
 
-        for layer, state in zipped:
+        for layer, state in safe_zip(layers, states):
             recurse_check(layer, state)
 
-        rval = OrderedDict(zipped)
+        rval = OrderedDict(safe_zip(layers, states))
 
         return rval
 
