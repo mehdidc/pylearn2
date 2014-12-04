@@ -10,29 +10,24 @@
     # In pylearn2, we do this by making a Binarizer dataset. The Binarizer
     # is a dataset that can draw samples like this in terms of any
     # input dataset with values in [0,1].
-    dataset: &data !obj:pylearn2.datasets.binarizer.Binarizer {
-        # We use the "raw" tag to specify the underlying dataset defining
-        # the sampling probabilities should be MNIST.
-        raw: &raw_train !obj:pylearn2.datasets.mnist.MNIST {
+    dataset: &data !obj:pylearn2.datasets.fonts.Fonts {
             which_set: "train",
-            start: 0,
-            stop: %(train_stop)i
-        }
+            kind : "a_GF_micro"
     },
     model: !obj:pylearn2.models.dbm.DBM {
-        batch_size: 100,
+        batch_size: 32,
         # 1 mean field iteration reaches convergence in the RBM
         niter: 1,
         # The visible layer of this RBM is just a binary vector
         # (as opposed to a binary image for convolutional models,
         # a Gaussian distributed vector, etc.)
         visible_layer: !obj:pylearn2.models.dbm.BinaryVector {
-            nvis: 784,
+            nvis: 256,
             # We can initialize the biases of the visible units
             # so that sigmoid(b_i) = E[v_i] where the expectation
             # is taken over the dataset. This should get the biases
             # about correct from the start and helps speed up learning.
-            bias_from_marginals: *raw_train,
+            bias_from_marginals: *data,
         },
         hidden_layers: [
             # This RBM has one hidden layer, consisting of a binary vector.
@@ -42,18 +37,20 @@
                 # Every layer in the DBM must have a layer_name field.
                 # These are used to generate unique names of monitoring
                 # channels associated with the different layers.
-                layer_name: 'h',
+                layer_name: 'h1',
                 # The detector layer is the portion of this layer that
                 # precedes the pooling. We control its size with this
                 # argument. Here we request 500 hidden units.
-                detector_layer_dim: %(detector_layer_dim)i,
+                detector_layer_dim: 4,
                 pool_size: 1,
                 # We initialize the weights by drawing them from W_ij ~ U(-irange, irange)
-                irange: .05,
+                irange: .001,
                 # We initialize all the biases of the hidden units to a negative
                 # number. This helps to learn a sparse representation.
                 init_bias: -2.,
-            }
+            },
+
+
        ]
     },
     # We train the model using stochastic gradient descent.
@@ -71,7 +68,7 @@
                },
                # These arguments say to compute the monitoring channels on 10 batches
                # of the training set.
-               monitoring_batches: %(monitoring_batches)i,
+               monitoring_batches: 10,
                monitoring_dataset : *data,
                # The SumOfCosts allows us to add together a few terms to make a complicated
                # cost function.
@@ -91,37 +88,44 @@
                         # The second term of our cost function is a little bit of weight
                         # decay.
                         !obj:pylearn2.costs.dbm.WeightDecay {
-                          coeffs: [ .0001  ]
+                          coeffs: [ .001]
                         },
                         # Finally, we regularize the RBM to sparse, using a method copied
                         # from Ruslan Salakhutdinov's DBM demo
                         !obj:pylearn2.costs.dbm.TorontoSparsity {
-                         targets: [ .2 ],
-                         coeffs: [ .001 ],
+                         targets: [ .2],
+                         coeffs: [ .001],
                         }
                        ],
            },
            # We tell the RBM to train for 300 epochs
-           termination_criterion: !obj:pylearn2.termination_criteria.EpochCounter { max_epochs: %(max_epochs)i },
-           update_callbacks: [
-                # This callback makes the learning rate shrink by dividing it by decay_factor after
-                # each sgd step.
-                !obj:pylearn2.training_algorithms.sgd.ExponentialDecay {
-                        decay_factor: 1.000015,
-                        min_lr:       0.0001
+           #
+           #
+           #
+     termination_criterion: !obj:pylearn2.termination_criteria.And {
+            criteria: [
+#                !obj:pylearn2.termination_criteria.MonitorBased {
+#                    channel_name: "mf_h1_mean_x.mean_u",
+#                    prop_decrease: 0.0000001,
+#                    N: 10
+#                },
+                !obj:pylearn2.termination_criteria.EpochCounter {
+                    max_epochs: 1000
                 }
-           ]
-        },
+            ]
+        }
+    },
+    
     extensions: [
             # This callback makes the momentum grow to 0.9 linearly. It starts
             # growing at epoch 5 and finishes growing at epoch 6.
             !obj:pylearn2.training_algorithms.learning_rule.MomentumAdjustor {
                 final_momentum: .9,
-                start: 5,
-                saturate: 6
+                start: 100,
+                saturate: 400
             },
     ],
-    save_path: "%(save_path)s/dbm.pkl",
+    save_path: "dbm.pkl",
     # This says to save it every epoch
     save_freq : 1
 }

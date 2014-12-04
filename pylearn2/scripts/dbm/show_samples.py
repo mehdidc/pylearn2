@@ -81,8 +81,8 @@ print('showing seed data...')
 show()
 
 print('How many Gibbs steps should I run with the seed data clamped? (negative = ignore seed data) ')
-x = int(input())
-
+#x = int(input())
+x=-1
 
 # Make shared variables representing the sampling state of the model
 layer_to_state = model.make_layer_to_state(m)

@@ -119,7 +119,7 @@
 
         termination_criterion : !obj:pylearn2.termination_criteria.MonitorBased {
             prop_decrease : 0.01,
-            N : 1,
+            N : 10,
         },
 
         # Let's throw a learning rate adjuster into the training algorithm.

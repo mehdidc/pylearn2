@@ -165,7 +165,7 @@ class MNIST(dense_design_matrix.DenseDesignMatrix):
 
         if self.X is not None and preprocessor:
             preprocessor.apply(self, fit_preprocessor)
-
+        print self.X.shape, self.y.shape
     def adjust_for_viewer(self, X):
         """
         .. todo::

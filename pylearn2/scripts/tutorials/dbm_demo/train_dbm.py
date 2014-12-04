@@ -19,10 +19,7 @@ def train_yaml(yaml_file):
 def train(yaml_file_path, save_path):
 
     yaml = open("{0}/rbm.yaml".format(yaml_file_path), 'r').read()
-    hyper_params = {'detector_layer_dim': 500,
-                    'monitoring_batches': 10,
-                    'train_stop': 50000,
-                    'max_epochs': 300,
+                    'max_epochs': 100,
                     'save_path': save_path}
 
     yaml = yaml % (hyper_params)
