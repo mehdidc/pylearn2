@@ -28,10 +28,9 @@ class ILC(DenseDesignMatrix):
         N = np.prod( data.shape[1:] )
         data = data.reshape(  (data.shape[0], N))
 
-        view_converter = DefaultViewConverter((18, 18, 1))
+        view_converter = DefaultViewConverter((18, 18, 1)) # will not work...
         X = data
         X = 1.*(X > 0)
-        print X.shape
         super(ILC, self).__init__(X=X, view_converter=view_converter)
 
 if __name__ == "__main__":
