@@ -49,10 +49,7 @@ class ILC(DenseDesignMatrix):
         view_converter = DefaultViewConverter((18, 18, 1))
         if binarize:
             X = 1.*(X > 0)
-        print X.shape, y.shape
-        
-        print np.sum(y) 
-        super(ILC, self).__init__(X=X, y=y, view_converter=view_converter)
+        super(ILC, self).__init__(X=X, view_converter=view_converter)
 
 if __name__ == "__main__":
     pass

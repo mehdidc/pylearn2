@@ -16,7 +16,7 @@ from pylearn2.utils.string_utils import preprocess
 
 class Fonts(DenseDesignMatrix):
 
-    def __init__(self, which_set, kind):
+    def __init__(self, kind):
         base_path = os.path.join(preprocess("${PYLEARN2_DATA_PATH}"), "fonts")
 
         set_file ="ds_%s.npy" % (kind,)
@@ -27,26 +27,18 @@ class Fonts(DenseDesignMatrix):
         data = np.array(list(data))
         N = np.prod( data.shape[1:] )
         data = data.reshape(  (data.shape[0], N))
+        
+        nb_train = data.shape[0]
+        nb_train = 100 * (nb_train/100) # make it a multiple of 100
+        X = data[0:nb_train]
 
-        ratio_train = 1.
-        ratio_valid = 0.
-
-        nb_train = int(data.shape[0]*ratio_train)
-        nb_train = 100 * (nb_train/100)
-
-        nb_valid = int(data.shape[0]*ratio_valid)
-
-        if which_set == 'train':
-            X=data[0:nb_train]
-        elif which_set == 'valid':
-            X=data[nb_train:nb_train+nb_valid]
-        else:
-            X=data[nb_train+nb_valid:]
-        print X.shape
-
-        view_converter = DefaultViewConverter((16, 16, 1))
+        if len(X.shape) == 3:
+            view_c = X.shape[1], X.shape[2], 1
+        elif len(X.shape) == 2:
+            size = int(np.sqrt(X.shape[1]))
+            view_c = size, size, 1
+        view_converter = DefaultViewConverter(view_c)
         super(Fonts, self).__init__(X=X, view_converter=view_converter)
 
 if __name__ == "__main__":
-    fonts(which_set='train')
-    fonts(which_set='test')
+    pass
