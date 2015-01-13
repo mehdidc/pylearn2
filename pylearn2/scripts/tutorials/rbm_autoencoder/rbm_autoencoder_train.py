@@ -13,9 +13,18 @@ if __name__ == "__main__":
     nb_units = map(int, sys.argv[4:])
 
     yaml_files = [yaml_file_vis_hid] + [yaml_file_hid_hid] * (len(nb_units) - 1)
-    dataset = open(yaml_file_dataset).read()
+    orig_dataset = open(yaml_file_dataset).read()
     i = 0
+
+    t = """!obj:pylearn2.datasets.transformer_dataset.TransformerDataset {
+        raw:  %(dataset)s,
+        transformer: !pkl: "layer_%(h_id_prev)d.pkl"
+    }"""
     for (nvis, nhid), yaml_file in zip(zip(nb_units, nb_units[1:]), yaml_files):
+        if i == 0:
+            dataset = orig_dataset
+        else:
+            dataset = t % {"dataset": dataset, "h_id_prev": i - 1}
         print "Training layer %d " % (i + 1,)
         data = open(yaml_file, "r").read()
         params = {"nvis": nvis, "nhid": nhid, "h_id": i,
