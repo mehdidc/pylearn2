@@ -12,6 +12,7 @@ __email__ = "zygmunt@fastml.com"
 
 import csv
 import numpy as np
+import pandas as pd
 import os
 
 from pylearn2.datasets.dense_design_matrix import DenseDesignMatrix
@@ -68,7 +69,10 @@ class CSVDataset(DenseDesignMatrix):
                  stop=None,
                  start_fraction=None,
                  end_fraction=None,
-                 labels_col=0):
+                 drop_labels=None,
+                 keep_labels=None,
+                 y_label=None
+                 ):
         """
         .. todo::
 
@@ -83,7 +87,10 @@ class CSVDataset(DenseDesignMatrix):
         self.stop = stop
         self.start_fraction = start_fraction
         self.end_fraction = end_fraction
-        self.labels_col = labels_col
+
+        self.drop_labels = drop_labels if drop_labels is not None else set()
+        self.keep_labels = keep_labels if keep_labels is not None else set()
+        self.y_label = y_label
 
         self.view_converter = None
 
@@ -126,7 +133,7 @@ class CSVDataset(DenseDesignMatrix):
             super(CSVDataset, self).__init__(X=X, y=y)
         else:
             super(CSVDataset, self).__init__(X=X, y=y,
-                                             y_labels=np.max(y) + 1)
+                                             y_labels=len(set(list(y[:,0]))))
 
     def _load_data(self):
         """
@@ -135,13 +142,12 @@ class CSVDataset(DenseDesignMatrix):
             WRITEME
         """
         assert self.path.endswith('.csv')
+        
+        data = pd.read_csv(self.path)
 
-        if self.expect_headers:
-            data = np.loadtxt(self.path,
-                              delimiter=self.delimiter,
-                              skiprows=1)
-        else:
-            data = np.loadtxt(self.path, delimiter=self.delimiter)
+        cols = data.columns
+        cols = set(cols) + set(self.keep_labels) - self.drop_labels
+        
 
         def take_subset(X, y):
             if self.start_fraction is not None:
@@ -162,16 +168,15 @@ class CSVDataset(DenseDesignMatrix):
             return X, y
 
         if self.expect_labels:
-
-            y = data[:, self.labels_col]
-            inds = range(data.shape[1])
-            del inds[self.labels_col]
-            X = data[:, inds]
-            y = y.reshape((y.shape[0], 1))
+            
+            y = [[example[self.labels_col]] for example in data]
+            X = [list(example[0:self.labels_col]) for example in data]
+            X = np.array(X)
+            y = np.array(y)
         else:
-            X = data
+            X = [list(example) for example in data]
             y = None
 
         X, y = take_subset(X, y)
 
-        return X, y
+        return X.astype(np.float32), y
