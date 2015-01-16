@@ -12,6 +12,7 @@ __email__ = "zygmunt@fastml.com"
 
 import csv
 import numpy as np
+import pandas as pd
 import os
 
 from pylearn2.datasets.dense_design_matrix import DenseDesignMatrix
@@ -126,7 +127,7 @@ class CSVDataset(DenseDesignMatrix):
             super(CSVDataset, self).__init__(X=X, y=y)
         else:
             super(CSVDataset, self).__init__(X=X, y=y,
-                                             y_labels=np.max(y) + 1)
+                                             y_labels=len(set(list(y[:,0]))))
 
     def _load_data(self):
         """
@@ -135,13 +136,9 @@ class CSVDataset(DenseDesignMatrix):
             WRITEME
         """
         assert self.path.endswith('.csv')
-
-        if self.expect_headers:
-            data = np.loadtxt(self.path,
-                              delimiter=self.delimiter,
-                              skiprows=1)
-        else:
-            data = np.loadtxt(self.path, delimiter=self.delimiter)
+        
+        data = pd.read_csv(self.path)
+        data = data.get_values()
 
         def take_subset(X, y):
             if self.start_fraction is not None:
@@ -162,14 +159,13 @@ class CSVDataset(DenseDesignMatrix):
             return X, y
 
         if self.expect_labels:
-
-            y = data[:, self.labels_col]
-            inds = range(data.shape[1])
-            del inds[self.labels_col]
-            X = data[:, inds]
-            y = y.reshape((y.shape[0], 1))
+            
+            y = [[example[self.labels_col]] for example in data]
+            X = [list(example[0:self.labels_col]) for example in data]
+            X = np.array(X)
+            y = np.array(y)
         else:
-            X = data
+            X = [list(example) for example in data]
             y = None
 
         X, y = take_subset(X, y)
