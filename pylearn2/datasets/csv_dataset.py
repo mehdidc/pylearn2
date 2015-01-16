@@ -67,7 +67,8 @@ class CSVDataset(DenseDesignMatrix):
                  start=None,
                  stop=None,
                  start_fraction=None,
-                 end_fraction=None):
+                 end_fraction=None,
+                 labels_col=0):
         """
         .. todo::
 
@@ -82,6 +83,7 @@ class CSVDataset(DenseDesignMatrix):
         self.stop = stop
         self.start_fraction = start_fraction
         self.end_fraction = end_fraction
+        self.labels_col = labels_col
 
         self.view_converter = None
 
@@ -160,8 +162,11 @@ class CSVDataset(DenseDesignMatrix):
             return X, y
 
         if self.expect_labels:
-            y = data[:, 0]
-            X = data[:, 1:]
+
+            y = data[:, self.labels_col]
+            inds = range(data.shape[1])
+            del inds[self.labels_col]
+            X = data[:, inds]
             y = y.reshape((y.shape[0], 1))
         else:
             X = data
