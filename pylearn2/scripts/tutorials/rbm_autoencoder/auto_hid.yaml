@@ -1,0 +1,10 @@
+!obj:pylearn2.models.autoencoder.DenoisingAutoencoder {
+        nvis : %(nvis)d,
+        nhid : %(nhid)d,
+        irange : 0.05,
+        corruptor: !obj:pylearn2.corruption.BinomialCorruptor {
+            corruption_level: .2,
+        },
+        act_enc: "sigmoid",
+        act_dec: "sigmoid",    # Linear activation on the decoder side.
+}
