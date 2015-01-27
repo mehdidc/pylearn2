@@ -19,10 +19,10 @@ def build_visualizations_by_averaging_inputs_maximizing_activations(inputs, acti
     for i in xrange(activations.shape[1]):
         acts = activations[:, i]
         inds = range(inputs.shape[0])
-        inds = sorted(inds, key=lambda i: acts[i], reversed=True)
+        inds = sorted(inds, key=lambda i: acts[i], reverse=True)
         last = max(1, int(top * inputs.shape[0]))
         inds = inds[0:last]
-        visualizations[i] = inputs[inds].mean(axis=0).reshape((shape_2d[0], shaped_2d[1]))
+        visualizations[i] = inputs[inds].mean(axis=0).reshape((shape_2d[0], shape_2d[1]))
     return visualizations
 
 
