@@ -15,7 +15,7 @@ if __name__ == "__main__":
     orig_dataset = open(yaml_file_dataset).read()
     i = 0
 
-    t = """!obj:pylearn2.datasets. {
+    t = """!obj:pylearn2.datasets.transformer_dataset.TransformerDataset {
         raw:  %(dataset)s,
         transformer: !pkl: "layer_%(h_id_prev)d.pkl"
     }"""
