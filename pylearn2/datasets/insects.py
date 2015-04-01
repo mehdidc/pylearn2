@@ -14,7 +14,7 @@ N = np
 from pylearn2.datasets import cache, dense_design_matrix
 from pylearn2.expr.preprocessing import global_contrast_normalize
 from pylearn2.utils import contains_nan
-
+from lasagne.datasets.insects import Insects as Insects_
 
 class Insects(dense_design_matrix.DenseDesignMatrix):
 
@@ -41,7 +41,7 @@ class Insects(dense_design_matrix.DenseDesignMatrix):
 
     def __init__(self, which_set, center=False, rescale=False, gcn=None,
                  start=None, stop=None, axes=('b', 0, 1, 'c'),
-                 toronto_prepro = False, preprocessor = None):
+                 toronto_prepro = False, preprocessor = None, grayscale=False):
         # note: there is no such thing as the cifar10 validation set;
         # pylearn1 defined one but really it should be user-configurable
         # (as it is here)
@@ -53,24 +53,21 @@ class Insects(dense_design_matrix.DenseDesignMatrix):
         ntrain = 22000
         nvalid = 0  # artefact, we won't use it
         ntest = 2300
+        
+
+        dataset = Insects_(grayscale=grayscale)
+        dataset.load()
 
         # we also expose the following details:
-        self.img_shape = (3, 64, 64)
+        self.img_shape = ( (3 if grayscale==False else 1), 64, 64)
         self.img_size = N.prod(self.img_shape)
         self.n_classes = 18
 
         # prepare loading
-        data = np.load(os.path.join(os.getenv("DATA_PATH"), "insects", "data_64x64.npy.npz"))
-        x = data['X']
+        x = dataset.X * 255.
         x = x.reshape( (x.shape[0], np.prod(x.shape[1:])))
-        y = data['y']
-
-        labels = list(set(y.tolist()))
-        mapping = {}
-        for i, l in enumerate(labels):
-            mapping[l] = i
-        for i in xrange(y.shape[0]):
-            y[i] = mapping[y[i]]
+        y = dataset.y
+        y = dataset.y.reshape( (dataset.y.shape[0], 1) )
 
         # process this data
         Xs = {'train': x[0:ntrain],
@@ -81,11 +78,6 @@ class Insects(dense_design_matrix.DenseDesignMatrix):
 
         X = N.cast['float32'](Xs[which_set])
         y = Ys[which_set]
-
-        if isinstance(y, list):
-            y = np.asarray(y).astype(dtype)
-
-        y = y.reshape((y.shape[0], 1))
 
         if center:
             X -= 127.5
@@ -125,10 +117,10 @@ class Insects(dense_design_matrix.DenseDesignMatrix):
             y = y[start:stop, :]
             assert X.shape[0] == y.shape[0]
 
-        view_converter = dense_design_matrix.DefaultViewConverter((64, 64, 3),
-                                                                  axes)
+#        view_converter = dense_design_matrix.DefaultViewConverter((64, 64, 3),
+#                                                                  axes)
 
-        super(Insects, self).__init__(X=X, y=y, view_converter=view_converter,
+        super(Insects, self).__init__(X=X, y=y, view_converter=None,
                                       y_labels=self.n_classes)
 
         assert not contains_nan(self.X)

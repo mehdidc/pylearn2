@@ -4,17 +4,18 @@
         start : 0,
         stop : 18000,
         center : true,
-        rescale : true
+        rescale : true,
+        grayscale : true
     },
     model: !obj:pylearn2.models.mlp.MLP {
         batch_size: 100,
         input_space: !obj:pylearn2.space.Conv2DSpace {
             shape: [64, 64],
-            num_channels: 3
+            num_channels: 1
         },
         layers: [ !obj:pylearn2.models.mlp.ConvRectifiedLinear {
                      layer_name: 'h2',
-                     output_channels: 64,
+                     output_channels: 16,
                      irange: .001,
                      kernel_shape: [7, 7],
                      pool_shape: [2, 2],
@@ -23,24 +24,17 @@
                  }, 
                  !obj:pylearn2.models.mlp.ConvRectifiedLinear {
                      layer_name: 'h3',
-                     output_channels: 128,
+                     output_channels: 32,
                      irange: .001,
                      kernel_shape: [7, 7],
                      pool_shape: [2, 2],
                      pool_stride: [1, 1],
                      #max_kernel_norm: 1.9365
                  }, 
-
                  !obj:pylearn2.models.mlp.RectifiedLinear {
                      layer_name: 'h4',
                      dim: 1000,
-                     sparse_init: 0.01,
-                 },
-
-                 !obj:pylearn2.models.mlp.RectifiedLinear {
-                     layer_name: 'h5',
-                     dim: 1000,
-                     irange: 0.01,
+                     irange: 0.001,
                  },
                  !obj:pylearn2.models.mlp.Softmax {
                      #max_col_norm: 1.9365,
@@ -64,12 +58,14 @@
                               start: 18000,
                               stop:  20000,
                               center: true,
-                              rescale: True
+                              rescale: True,
+                              grayscale : true
                           },
                 'test'  : !obj:pylearn2.datasets.insects.Insects {
                               which_set: 'test',
                               center: true,
-                              rescale: true
+                              rescale: true,
+                              grayscale : true
                           }
             },
         cost: !obj:pylearn2.costs.cost.SumOfCosts { costs: [
@@ -85,11 +81,11 @@
             criteria: [
                 !obj:pylearn2.termination_criteria.MonitorBased {
                     channel_name: "valid_y_misclass",
-                    prop_decrease: 0.0001,
+                    prop_decrease: 0.01,
                     N: 10
                 },
                 !obj:pylearn2.termination_criteria.EpochCounter {
-                    max_epochs: 10
+                    max_epochs: 100
                 },
             ]
         },
@@ -99,11 +95,11 @@
              channel_name: 'valid_y_misclass',
              save_path: "best_insects.pkl"
         }, 
-        #!obj:pylearn2.training_algorithms.learning_rule.MomentumAdjustor {
-        #    start: 1,
-        #    saturate: 10,
-        #    final_momentum: .99
-        #}
+        !obj:pylearn2.training_algorithms.learning_rule.MomentumAdjustor {
+            start: 1,
+            saturate: 10,
+            final_momentum: .99
+        }
     ]
 }
 
